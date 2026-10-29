@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cornhub</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌽</text></svg>">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--bg:#000;--panel:#0f0f0f;--panel2:#181818;--line:#2a2a2a;--text:#f5efdc;--mute:#a09a88;--corn:#f6c21b;--husk:#6fae3d;--err:#ff6b4a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+body{padding-top:env(safe-area-inset-top,0)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--corn)}
+:focus-visible{outline:2px solid var(--corn);outline-offset:2px}
+header{position:sticky;top:0;z-index:20;background:#000;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;padding:10px 16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)}
+.logo img{height:38px;max-width:180px;object-fit:contain}
+.search{flex:1;min-width:140px}
+.search input{width:100%;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.btn{border:0;border-radius:8px;padding:9px 14px;background:var(--corn);color:#1a1400;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.on{background:var(--corn);color:#1a1400;border-color:var(--corn)}
+.tt{display:inline-flex;align-items:center;gap:6px;color:var(--text);text-decoration:none;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.tt svg{width:16px;height:16px}
+.who{font-size:13px;color:var(--mute)}
+nav.cats{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;scrollbar-width:thin}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 14px;cursor:pointer}
+.chip.on{background:var(--husk);border-color:var(--husk);color:#0b1405;font-weight:700}
+main{padding:4px 16px 40px;max-width:1400px;margin:0 auto}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.th{position:relative;aspect-ratio:16/9;background:#000;display:block;overflow:hidden}
+.th img,.th video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.ph{width:100%;height:100%;display:grid;place-items:center;font-size:44px;background:linear-gradient(135deg,#2a2208,#101a0a)}
+.th .play{position:absolute;inset:0;display:grid;place-items:center;font-size:34px;background:rgba(0,0,0,.3);opacity:0;transition:opacity .15s}
+.th:hover .play{opacity:1}
+.badge{position:absolute;left:8px;top:8px;background:var(--corn);color:#1a1400;font-size:12px;font-weight:800;border-radius:4px;padding:2px 7px}
+.card .b{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card h3{margin:0;font-size:15px;line-height:1.3}
+.card h3 a{color:var(--text);text-decoration:none}
+.card p{margin:0;font-size:13px;color:var(--mute);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tag{font-size:12px;color:var(--corn)}
+.meta{font-size:12px;color:var(--mute)}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:auto}
+.row select{background:#000;border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-size:12px}
+.empty{padding:60px 10px;text-align:center;color:var(--mute)}
+footer{border-top:1px solid var(--line);padding:22px 16px;text-align:center;color:var(--mute);font-size:14px;display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+
+/* halaman tonton */
+.watch{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:22px;padding-top:14px}
+@media(max-width:960px){.watch{grid-template-columns:1fr}}
+.stage{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.stage.v{aspect-ratio:9/16;max-height:78vh;width:min(100%,calc(78vh*9/16));margin:0 auto}
+.stage video,.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.skip{position:absolute;right:10px;bottom:10px;z-index:3}
+.watch h1{font-size:20px;margin:14px 0 10px;line-height:1.3}
+.chan{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.av{width:40px;height:40px;border-radius:50%;background:var(--corn);color:#1a1400;display:grid;place-items:center;font-weight:800;flex:none;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.chan .nm{font-weight:700}
+.chan .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.desc{background:var(--panel2);border-radius:12px;padding:12px 14px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.desc .meta{display:block;margin-bottom:6px;font-weight:700;color:var(--text)}
+.desc.clip{max-height:96px;overflow:hidden;cursor:pointer}
+.cm h2{font-size:18px;margin:22px 0 12px}
+.cform{display:flex;gap:12px;margin-bottom:18px}
+.cform textarea{flex:1;background:#000;border:0;border-bottom:1px solid var(--line);padding:8px 2px;resize:vertical;min-height:44px}
+.cform .go{display:flex;flex-direction:column;gap:6px}
+.ci{display:flex;gap:12px;margin-bottom:16px}
+.ci .bd{flex:1;min-width:0}
+.ci .hd{font-size:13px;font-weight:700}
+.ci .hd span{font-weight:400;color:var(--mute);margin-left:6px}
+.ci .tx{font-size:14px;white-space:pre-wrap;word-break:break-word;margin:3px 0}
+.ci .ac{display:flex;gap:10px;font-size:13px}
+.lk{background:none;border:0;color:var(--mute);cursor:pointer;padding:2px 0}
+.lk.on{color:var(--corn)}
+.rel{display:flex;gap:10px;margin-bottom:12px;text-decoration:none;color:var(--text)}
+.rel .th{width:168px;flex:none;border-radius:8px}
+.rel .t{font-size:14px;font-weight:600;line-height:1.3}
+.rel h3{margin:0 0 14px;font-size:16px}
+
+/* dialog */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:16px}
+.ov.show{display:flex}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(520px,100%);max-height:92vh;overflow:auto;padding:20px}
+.box h2{margin:0 0 12px;font-size:20px}
+.f{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:14px}
+.f input,.f select,.f textarea{background:#000;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+.f small{color:var(--mute)}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs .btn{flex:1;justify-content:center}
+.sep{text-align:center;color:var(--mute);font-size:13px;margin:12px 0}
+.msg{color:var(--err);font-size:13px;min-height:18px}
+.errv{position:absolute;inset:0;z-index:5;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+.errv svg{width:88px;height:88px}
+.errv h3{margin:0}
+.errv p{margin:0;color:var(--mute);font-size:14px;max-width:380px}
+#net{position:fixed;inset:0;z-index:90;background:#000;display:none}
+#net.show{display:block}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000;border:1px solid var(--corn);padding:9px 16px;border-radius:8px;z-index:99;display:none;font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#/" id="logoLink"><img id="logoImg" alt="Cornhub"></a>
+  <div class="search"><input id="q" type="search" placeholder="Cari video" aria-label="Cari video"></div>
+  <a class="tt" id="ttTop" target="_blank" rel="noopener"></a>
+  <a class="tt" id="ytTop" target="_blank" rel="noopener"></a>
+  <button class="btn" id="upBtn">Upload</button>
+  <button class="btn ghost" id="catBtn">Atur kategori</button>
+  <span class="who" id="who"></span>
+  <button class="btn ghost" id="outBtn" style="display:none">Keluar</button>
+</header>
+
+<section id="home">
+  <nav class="cats" id="cats" aria-label="Kategori"></nav>
+  <main><div class="grid" id="grid"></div></main>
+</section>
+
+<main id="watchView" style="display:none">
+  <div class="watch">
+    <div>
+      <div class="stage" id="stage"></div>
+      <h1 id="wTitle"></h1>
+      <div class="chan" id="wChan"></div>
+      <div class="desc clip" id="wDesc" title="Klik untuk buka semua"></div>
+      <section class="cm" id="wCm"></section>
+    </div>
+    <aside id="wRel"></aside>
+  </div>
+</main>
+
+<footer><a class="tt" id="ttFoot" target="_blank" rel="noopener"></a><a class="tt" id="ytFoot" target="_blank" rel="noopener"></a><span>Dibuat oleh @duallyy_12 dan @cornhub.website</span></footer>
+
+<!-- LOGIN -->
+<div class="ov" id="auth"><div class="box">
+  <div style="text-align:center;margin-bottom:10px"><img id="logoAuth" alt="Cornhub" style="height:46px;max-width:100%"></div>
+  <div class="tabs"><button class="btn" id="tLogin">Masuk</button><button class="btn ghost" id="tReg">Daftar</button></div>
+  <div class="f" id="fName" style="display:none"><label for="aName">Nama</label><input id="aName" autocomplete="name"></div>
+  <div class="f"><label for="aMail">Email</label><input id="aMail" type="email" autocomplete="email"></div>
+  <div class="f"><label for="aPass">Password</label><input id="aPass" type="password" autocomplete="current-password"></div>
+  <div class="msg" id="aMsg"></div>
+  <button class="btn" id="aGo" style="width:100%;justify-content:center">Masuk</button>
+  <div class="sep">atau</div>
+  <div id="gBtn" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+  <button class="btn ghost" id="gFallback" style="width:100%;display:none;justify-content:center">Lanjut dengan Google</button>
+  <button class="btn ghost" id="guest" style="width:100%;margin-top:8px;justify-content:center">Masuk sebagai tamu (7 hari)</button>
+</div></div>
+
+<!-- UPLOAD -->
+<div class="ov" id="upl"><div class="box">
+  <h2>Upload video</h2>
+  <div class="f"><label for="uTitle">Judul</label><input id="uTitle" maxlength="100"></div>
+  <div class="f"><label for="uDesc">Deskripsi</label><textarea id="uDesc" rows="3" maxlength="1500"></textarea><small>Link di deskripsi otomatis bisa diklik.</small></div>
+  <div class="f"><label for="uUrl">Link video</label><input id="uUrl" type="url" placeholder="https://...">
+    <small>Link YouTube (video atau Shorts) dan link .mp4 diputar langsung. Link lain dibuka lewat webview.</small></div>
+  <div class="f"><label for="uCat">Kategori</label><select id="uCat"></select></div>
+  <div class="f"><label for="uThumb">Thumbnail (opsional)</label><input id="uThumb" type="file" accept="image/*">
+    <small>Kosongkan untuk thumbnail otomatis.</small></div>
+  <div class="msg" id="uMsg"></div>
+  <div style="display:flex;gap:8px"><button class="btn" id="uSave">Publikasikan</button><button class="btn ghost" data-close>Batal</button></div>
+</div></div>
+
+<!-- KATEGORI -->
+<div class="ov" id="catm"><div class="box">
+  <h2>Atur kategori</h2>
+  <div id="catList"></div>
+  <div style="display:flex;gap:8px"><button class="btn" id="catSave">Simpan</button><button class="btn ghost" data-close>Batal</button></div>
+</div></div>
+
+<div id="net"></div>
+<div id="toast"></div>
+
+<script>
+/* ================= PENGATURAN — EDIT DI SINI ================= */
+const CFG = {
+  logo: "https://www.cornhubstore.com/cdn/shop/files/CornhubLogo_381da43c-78da-4b73-b459-8b3280b7709c.png?v=1721848187",
+  intro: "intro.mp4",                 // file intro di folder yang sama dengan index.html
+  tiktok: "duallyy_12",
+  googleClientId: ""                  // isi Client ID dari Google Cloud Console (OAuth Web)
+};
+/* Video 11: link belum dikirim, masih video contoh. Ganti SAMPLE di baris Video 11. */
+const SAMPLE = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+/* 13 video bawaan: [judul, id kategori (c1-c7), LINK VIDEO, deskripsi, thumbnail (opsional)] — ganti link-nya */
+const VIDEOS = [
+  ["Video 1","c1","https://youtu.be/j8qp3ITVqY0","Deskripsi video 1"],
+  ["Video 2","c2","https://youtu.be/T9B5ERQg_14","Deskripsi video 2"],
+  ["Video 3","c3","https://youtu.be/5KY9YGkILQ4","Deskripsi video 3"],
+  ["Video 4","c4","https://youtu.be/scE5AvbYVaM","Deskripsi video 4"],
+  ["Video 5","c5","https://youtube.com/shorts/gFa06nEIwrk","Deskripsi video 5"],
+  ["Video 6","c6","https://youtube.com/shorts/w_m7_zZMIP0","Deskripsi video 6"],
+  ["Video 7","c7","https://youtu.be/78HJtOIlpDA","Deskripsi video 7"],
+  ["Video 8","c1","https://youtu.be/Ldx8cV_aeXM","Deskripsi video 8"],
+  ["Video 9","c2","https://youtu.be/HH_d-z1K1kI","Deskripsi video 9"],
+  ["Video 10","c3","https://youtu.be/bJeG-GGH114","Deskripsi video 10"],
+  ["Video 11","c4",SAMPLE,"Deskripsi video 11"],
+  ["Video 12","c5","https://youtu.be/1VbZE6YhjKk","Deskripsi video 12"],
+  ["Video 13","c6","https://youtu.be/79usTCuj5G8","Deskripsi video 13"]
+].map((v,i)=>({id:"b"+(i+1),title:v[0],cat:v[1],url:v[2],desc:v[3],thumb:v[4]||"",builtin:true}));
+const DEFAULT_CATS = [["c1","Musik"],["c2","Gaming"],["c3","Komedi"],["c4","Edukasi"],["c5","Olahraga"],["c6","Kuliner"],["c7","Vlog"]];
+/* ============================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const linkify = t => esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]])/g,u=>`<a href="${u}" target="_blank" rel="noopener nofollow">${u}</a>`);
+const LS = {
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast("Penyimpanan penuh. Hapus video atau pakai thumbnail lebih kecil.");return false}}
+};
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",3000)}
+function ago(ts){if(!ts)return"";const d=(Date.now()-ts)/1000;
+  if(d<60)return"baru saja";if(d<3600)return Math.floor(d/60)+" menit lalu";if(d<86400)return Math.floor(d/3600)+" jam lalu";
+  if(d<2592000)return Math.floor(d/86400)+" hari lalu";return new Date(ts).toLocaleDateString("id-ID")}
+
+const TT_SVG='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.6 6.7a4.8 4.8 0 0 1-3.8-4.2h-3.4v13.4a2.9 2.9 0 1 1-2-2.8V9.6a6.3 6.3 0 1 0 5.4 6.3V9.3a8.1 8.1 0 0 0 4.6 1.4V7.3a4.8 4.8 0 0 1-.8-.6z"/></svg>';
+const YT_SVG='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>';
+const TT_URL="https://www.tiktok.com/@"+CFG.tiktok, YT_URL="https://www.youtube.com/@cornhub.website";
+for(const [i,h,svg,txt] of [["#ttTop",TT_URL,TT_SVG,"@"+CFG.tiktok],["#ttFoot",TT_URL,TT_SVG,"@"+CFG.tiktok],["#ytTop",YT_URL,YT_SVG,"@cornhub.website"],["#ytFoot",YT_URL,YT_SVG,"@cornhub.website"]]){
+  $(i).href=h;$(i).innerHTML=svg+txt}
+
+function logoFallback(img){img.outerHTML='<span style="font-weight:800;font-size:24px">Corn<span style="background:var(--corn);color:#1a1400;border-radius:6px;padding:0 6px;margin-left:2px">hub</span></span>'}
+for(const s of ["#logoImg","#logoAuth"]){$(s).src=CFG.logo;$(s).onerror=function(){logoFallback(this)}}
+
+/* ================= DATA ================= */
+let cats = LS.get("ch_cats",null) || DEFAULT_CATS.map(c=>({id:c[0],name:c[1]}));
+let uploads = LS.get("ch_uploads",[]);
+let users = LS.get("ch_users",{});
+let session = LS.get("ch_session",null);
+let social = LS.get("ch_social",{});
+let curCat = "all", query = "";
+const allVideos = () => uploads.concat(VIDEOS);
+const findVideo = id => allVideos().find(v=>v.id===id);
+const catName = id => (cats.find(c=>c.id===id)||{name:"Lainnya"}).name;
+const soc = id => social[id] || (social[id]={views:0,likes:[],dislikes:[],comments:[]});
+const saveSoc = () => LS.set("ch_social",social);
+const me = () => session ? session.email : null;
+
+/* ================= AUTH ================= */
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function validSession(){
+  if(!session) return false;
+  if(session.type==="guest" && Date.now()>session.exp){session=null;LS.set("ch_session",null);return false}
+  return true;
+}
+function setSession(s){session=s;LS.set("ch_session",s);closeAll();renderAll()}
+let regMode=false;
+function authMode(reg){
+  regMode=reg;$("#fName").style.display=reg?"flex":"none";$("#aGo").textContent=reg?"Daftar":"Masuk";
+  $("#tLogin").className="btn"+(reg?" ghost":"");$("#tReg").className="btn"+(reg?"":" ghost");$("#aMsg").textContent="";
+}
+$("#tLogin").onclick=()=>authMode(false);$("#tReg").onclick=()=>authMode(true);
+$("#aGo").onclick=async()=>{
+  const email=$("#aMail").value.trim().toLowerCase(),pass=$("#aPass").value,name=$("#aName").value.trim();
+  const m=$("#aMsg");m.textContent="";
+  if(!/^\S+@\S+\.\S+$/.test(email)) return m.textContent="Masukkan email yang valid.";
+  if(pass.length<6) return m.textContent="Password minimal 6 karakter.";
+  const h=await sha(pass);
+  if(regMode){
+    if(!name) return m.textContent="Isi nama kamu.";
+    if(users[email]) return m.textContent="Email sudah terdaftar. Silakan masuk.";
+    users[email]={name,hash:h};LS.set("ch_users",users);
+    setSession({type:"user",name,email});
+  }else{
+    const u=users[email];
+    if(!u||u.hash!==h) return m.textContent="Email atau password salah.";
+    setSession({type:"user",name:u.name,email});
+  }
+};
+$("#guest").onclick=()=>setSession({type:"guest",name:"Tamu",email:"guest",exp:Date.now()+7*864e5});
+function onGoogle(resp){
+  try{
+    const p=JSON.parse(decodeURIComponent(escape(atob(resp.credential.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))));
+    setSession({type:"google",name:p.name||p.email,email:p.email,pic:p.picture});
+  }catch(e){$("#aMsg").textContent="Login Google gagal. Coba lagi."}
+}
+function initGoogle(){
+  if(!CFG.googleClientId||!window.google||!google.accounts){return false}
+  google.accounts.id.initialize({client_id:CFG.googleClientId,callback:onGoogle});
+  google.accounts.id.renderButton($("#gBtn"),{theme:"filled_black",size:"large",text:"continue_with",width:300});
+  return true;
+}
+function setupGoogle(tries=0){
+  if(initGoogle()) return;
+  if(CFG.googleClientId && tries<20) return setTimeout(()=>setupGoogle(tries+1),300);
+  const b=$("#gFallback");b.style.display="flex";
+  b.onclick=()=>$("#aMsg").textContent=CFG.googleClientId?"Google belum termuat. Periksa koneksi lalu refresh.":"Isi googleClientId di bagian PENGATURAN kode dulu.";
+}
+$("#outBtn").onclick=()=>{session=null;LS.set("ch_session",null);if(window.google&&google.accounts)google.accounts.id.disableAutoSelect();renderAll()};
+
+/* ================= BERANDA ================= */
+function ytId(u){const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([\w-]{11})/);return m?m[1]:null}
+const isShort = u => /youtube\.com\/shorts\//i.test(u);
+const isDirect = u => /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(u);
+function thumbHtml(v){
+  if(v.thumb) return `<img src="${esc(v.thumb)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=ph>🌽</div>'">`;
+  const y=ytId(v.url);
+  if(y) return `<img src="https://img.youtube.com/vi/${y}/hqdefault.jpg" alt="" loading="lazy" onerror="this.outerHTML='<div class=ph>🌽</div>'">`;
+  if(isDirect(v.url)) return `<video src="${esc(v.url)}#t=1" preload="metadata" muted playsinline onerror="this.outerHTML='<div class=ph>🌽</div>'"></video>`;
+  return `<div class="ph">🌽</div>`;
+}
+const badge = v => isShort(v.url)?'<span class="badge">Short</span>':"";
+function renderCats(){
+  $("#cats").innerHTML=[{id:"all",name:"Semua"}].concat(cats).map(c=>`<button class="chip${c.id===curCat?" on":""}" data-c="${c.id}">${esc(c.name)}</button>`).join("");
+  $("#cats").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{curCat=b.dataset.c;renderCats();renderGrid()});
+}
+function renderGrid(){
+  const q=query.toLowerCase();
+  const list=allVideos().filter(v=>(curCat==="all"||v.cat===curCat)&&(!q||(v.title+" "+v.desc).toLowerCase().includes(q)));
+  if(!list.length){$("#grid").innerHTML='<div class="empty">Belum ada video di sini. Tekan Upload untuk menambahkan.</div>';return}
+  $("#grid").innerHTML=list.map(v=>{
+    const mine=!v.builtin&&session&&(v.owner===session.email);
+    const s=soc(v.id);
+    return `<article class="card"><a class="th" href="#/v/${v.id}" aria-label="Putar ${esc(v.title)}">${thumbHtml(v)}<div class="play">▶</div>${badge(v)}</a>
+    <div class="b"><span class="tag">${esc(catName(v.cat))}</span><h3><a href="#/v/${v.id}">${esc(v.title)}</a></h3><p>${esc(v.desc)}</p>
+    <span class="meta">${s.views} tayangan · ${s.comments.length} komentar</span>
+    ${mine?`<div class="row"><select data-cc="${v.id}" aria-label="Ubah kategori">${cats.map(c=>`<option value="${c.id}"${c.id===v.cat?" selected":""}>${esc(c.name)}</option>`).join("")}</select><button class="btn ghost sm" data-del="${v.id}">Hapus</button></div>`:""}
+    </div></article>`}).join("");
+  $("#grid").querySelectorAll("[data-cc]").forEach(s=>s.onchange=()=>{const v=uploads.find(x=>x.id===s.dataset.cc);if(v){v.cat=s.value;LS.set("ch_uploads",uploads);renderGrid()}});
+  $("#grid").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(confirm("Hapus video ini?")){uploads=uploads.filter(x=>x.id!==b.dataset.del);LS.set("ch_uploads",uploads);renderGrid()}});
+}
+function renderAll(){
+  const ok=validSession();
+  $("#auth").classList.toggle("show",!ok);
+  $("#who").textContent=ok?(session.type==="guest"?"Tamu · sisa "+Math.max(1,Math.ceil((session.exp-Date.now())/864e5))+" hari":session.name):"";
+  $("#outBtn").style.display=ok?"":"none";
+  renderCats();renderGrid();
+  if(curId) updComments();
+}
+
+/* ================= PEMUTAR ================= */
+let curId=null, playToken=0, ytPlayer=null, ytP=null;
+const ERR_SVG='<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="44" fill="#141414" stroke="#f6c21b" stroke-width="3"/><path d="M30 62c4-14 10-30 18-30s14 16 18 30" fill="none" stroke="#6fae3d" stroke-width="5" stroke-linecap="round"/><circle cx="38" cy="44" r="3.5" fill="#f5efdc"/><circle cx="58" cy="44" r="3.5" fill="#f5efdc"/><path d="M36 70h24" stroke="#ff6b4a" stroke-width="5" stroke-linecap="round"/></svg>';
+function errView(title,text,retry,label="Refresh",closeFn){
+  const d=document.createElement("div");d.className="errv";
+  d.innerHTML=ERR_SVG+`<h3>${esc(title)}</h3><p>${esc(text)}</p><div style="display:flex;gap:8px"><button class="btn" data-r>${esc(label)}</button>${closeFn?'<button class="btn ghost" data-x>Tutup</button>':""}</div>`;
+  d.querySelector("[data-r]").onclick=retry;
+  if(closeFn)d.querySelector("[data-x]").onclick=closeFn;
+  return d;
+}
+function destroyPlayer(){playToken++;try{ytPlayer&&ytPlayer.destroy&&ytPlayer.destroy()}catch(e){}ytPlayer=null;$("#stage").innerHTML=""}
+function loadYT(){
+  if(window.YT&&YT.Player) return Promise.resolve();
+  if(ytP) return ytP;
+  ytP=new Promise((res,rej)=>{
+    const t=setTimeout(()=>{ytP=null;rej()},9000);
+    window.onYouTubeIframeAPIReady=()=>{clearTimeout(t);res()};
+    const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";
+    s.onerror=()=>{clearTimeout(t);ytP=null;rej()};document.head.appendChild(s);
+  });
+  return ytP;
+}
+function showErr(title,text,retry,label){const st=$("#stage");st.innerHTML="";st.append(errView(title,text,retry,label))}
+function startIntro(){
+  destroyPlayer();const tk=playToken,st=$("#stage");
+  const iv=document.createElement("video");iv.src=CFG.intro;iv.autoplay=true;iv.playsInline=true;iv.controls=false;
+  let done=false;const go=()=>{if(done||tk!==playToken)return;done=true;playMain(tk)};
+  iv.onended=go;iv.onerror=go;
+  const sk=document.createElement("button");sk.className="btn ghost sm skip";sk.textContent="Lewati";sk.onclick=go;
+  st.append(iv,sk);
+  const p=iv.play();if(p&&p.catch)p.catch(()=>{iv.muted=true;iv.play().catch(go)});
+}
+function playMain(tk){
+  const v=findVideo(curId),st=$("#stage");if(!v)return;st.innerHTML="";
+  const y=ytId(v.url);
+  const generic=()=>showErr(navigator.onLine?"Video tidak bisa diputar":"Koneksi terputus",
+    navigator.onLine?"Link video mungkin rusak atau tidak bisa dibuka. Coba refresh.":"Periksa WiFi atau data kamu, lalu refresh.",
+    ()=>navigator.onLine?startIntro():toast("Masih offline"));
+  if(isDirect(v.url)){
+    const el=document.createElement("video");el.src=v.url;el.controls=true;el.autoplay=true;el.playsInline=true;
+    el.onerror=generic;el.addEventListener("stalled",()=>{if(!navigator.onLine)generic()});
+    st.append(el);const p=el.play();if(p&&p.catch)p.catch(()=>{});
+  }else if(y){
+    if(location.protocol==="file:"){
+      return showErr("YouTube belum bisa diputar dari file","Web ini dibuka langsung dari file di perangkat. YouTube hanya mau diputar kalau web sudah di-hosting (https://). Upload dulu, atau tonton lewat YouTube.",()=>window.open(v.url,"_blank"),"Buka di YouTube");
+    }
+    const h=document.createElement("div");h.id="ytHolder";st.append(h);
+    const fail=code=>{ if(tk!==playToken)return;
+      if(code===100) showErr("Video tidak ditemukan","Video ini dihapus atau dibuat privat oleh pemiliknya.",()=>window.open(v.url,"_blank"),"Buka di YouTube");
+      else if(code===101||code===150||code===153) showErr("Pemilik video melarang diputar di sini","Video ini hanya boleh ditonton di YouTube. Tekan tombol di bawah untuk membukanya.",()=>window.open(v.url,"_blank"),"Buka di YouTube");
+      else generic()};
+    loadYT().then(()=>{ if(tk!==playToken)return;
+      ytPlayer=new YT.Player("ytHolder",{videoId:y,width:"100%",height:"100%",
+        playerVars:{autoplay:1,rel:0,playsinline:1,modestbranding:1},
+        events:{onError:e=>fail(e.data),onReady:e=>{try{e.target.playVideo()}catch(x){}}}});
+    }).catch(()=>{ if(tk===playToken)generic()});
+  }else{
+    const f=document.createElement("iframe");f.src=v.url;
+    f.allow="autoplay; fullscreen; picture-in-picture";f.allowFullscreen=true;f.referrerPolicy="strict-origin-when-cross-origin";
+    st.append(f);
+  }
+}
+
+/* ================= HALAMAN TONTON ================= */
+function showWatch(id){
+  const v=findVideo(id);if(!v){location.hash="#/";return}
+  const first = curId!==id; curId=id;
+  $("#home").style.display="none";$("#watchView").style.display="";
+  if(!first)return;
+  window.scrollTo(0,0);
+  const s=soc(id);s.views++;saveSoc();
+  $("#stage").classList.toggle("v",isShort(v.url));
+  $("#wTitle").textContent=v.title;
+  const by=v.builtin?"Cornhub":(v.ownerName||"Pengguna");
+  $("#wChan").innerHTML=`<div class="av">${v.builtin?"🌽":esc(by[0].toUpperCase())}</div><div><div class="nm">${esc(by)}</div><div class="meta">${esc(catName(v.cat))}</div></div><div class="acts" id="wActs"></div>`;
+  const d=$("#wDesc");d.classList.add("clip");
+  d.innerHTML=`<span class="meta">${s.views} tayangan${v.at?" · "+ago(v.at):""} · ${esc(catName(v.cat))}</span>${linkify(v.desc||"Belum ada deskripsi.")}`;
+  d.onclick=()=>d.classList.remove("clip");
+  updActions();updComments();renderRelated(v);startIntro();
+}
+function updActions(){
+  const v=findVideo(curId);if(!v)return;const s=soc(curId),u=me();
+  const li=u&&s.likes.includes(u),di=u&&s.dislikes.includes(u);
+  $("#wActs").innerHTML=`<button class="btn ghost sm${li?" on":""}" id="bLike">👍 ${s.likes.length}</button><button class="btn ghost sm${di?" on":""}" id="bDis">👎 ${s.dislikes.length}</button><button class="btn ghost sm" id="bShare">Bagikan</button><a class="btn ghost sm" target="_blank" rel="noopener" href="${esc(v.url)}">Buka link asli</a>`;
+  $("#bLike").onclick=()=>react("likes","dislikes");$("#bDis").onclick=()=>react("dislikes","likes");
+  $("#bShare").onclick=async()=>{const u=location.href.split("#")[0]+"#/v/"+curId;
+    try{await navigator.clipboard.writeText(u);toast("Link disalin")}catch(e){prompt("Salin link ini:",u)}};
+}
+function react(a,b){
+  if(!validSession())return renderAll();const s=soc(curId),u=me();
+  s[b]=s[b].filter(x=>x!==u);
+  s[a]=s[a].includes(u)?s[a].filter(x=>x!==u):s[a].concat(u);
+  saveSoc();updActions();
+}
+function updComments(){
+  const s=soc(curId),u=me(),box=$("#wCm");if(!box)return;
+  const keep=$("#cTxt")?$("#cTxt").value:"";
+  const list=s.comments.slice().sort((a,b)=>b.at-a.at);
+  box.innerHTML=`<h2>${s.comments.length} komentar</h2>
+  <div class="cform"><div class="av">${esc(((session&&session.name)||"?")[0].toUpperCase())}</div>
+    <textarea id="cTxt" maxlength="1000" placeholder="Tulis komentar... link boleh ditempel" aria-label="Komentar"></textarea>
+    <div class="go"><button class="btn sm" id="cSend">Kirim</button></div></div>
+  <div id="cList">${list.map(c=>`<div class="ci"><div class="av">${esc(c.name[0].toUpperCase())}</div><div class="bd">
+    <div class="hd">${esc(c.name)}<span>${ago(c.at)}</span></div><div class="tx">${linkify(c.text)}</div>
+    <div class="ac"><button class="lk${u&&c.likes.includes(u)?" on":""}" data-l="${c.id}">👍 ${c.likes.length}</button>${u&&c.email===u?`<button class="lk" data-d="${c.id}">Hapus</button>`:""}</div></div></div>`).join("")||'<div class="empty">Belum ada komentar. Jadi yang pertama.</div>'}</div>`;
+  $("#cTxt").value=keep;
+  $("#cSend").onclick=()=>{
+    if(!validSession())return renderAll();
+    const t=$("#cTxt").value.trim();if(!t)return toast("Tulis komentar dulu");
+    s.comments.push({id:"c"+Date.now(),name:session.name,email:session.email,text:t,at:Date.now(),likes:[]});
+    $("#cTxt").value="";saveSoc();updComments();
+  };
+  box.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{
+    if(!validSession())return renderAll();
+    const c=s.comments.find(x=>x.id===b.dataset.l);c.likes=c.likes.includes(u)?c.likes.filter(x=>x!==u):c.likes.concat(u);saveSoc();updComments()});
+  box.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{
+    if(confirm("Hapus komentar ini?")){s.comments=s.comments.filter(x=>x.id!==b.dataset.d);saveSoc();updComments()}});
+}
+function renderRelated(v){
+  const rest=allVideos().filter(x=>x.id!==v.id).sort((a,b)=>(b.cat===v.cat)-(a.cat===v.cat)).slice(0,14);
+  $("#wRel").innerHTML=`<div class="rel"><h3>Video lainnya</h3></div>`+rest.map(x=>`<a class="rel" href="#/v/${x.id}"><div class="th">${thumbHtml(x)}${badge(x)}</div><div><div class="t">${esc(x.title)}</div><div class="meta">${esc(catName(x.cat))}</div></div></a>`).join("");
+}
+function route(){
+  const m=location.hash.match(/^#\/v\/(.+)$/);
+  if(m){showWatch(decodeURIComponent(m[1]))}
+  else{destroyPlayer();curId=null;$("#watchView").style.display="none";$("#home").style.display="";renderGrid()}
+}
+addEventListener("hashchange",route);
+
+/* ================= UPLOAD ================= */
+function resizeImg(file,max=480){return new Promise((res,rej)=>{
+  const r=new FileReader();r.onerror=rej;
+  r.onload=()=>{const i=new Image();i.onerror=rej;i.onload=()=>{
+    const s=Math.min(1,max/i.width),c=document.createElement("canvas");c.width=i.width*s;c.height=i.height*s;
+    c.getContext("2d").drawImage(i,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.8))};i.src=r.result};
+  r.readAsDataURL(file)})}
+$("#upBtn").onclick=()=>{
+  if(!validSession())return renderAll();
+  $("#uCat").innerHTML=cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  $("#uMsg").textContent="";$("#upl").classList.add("show");
+};
+$("#uSave").onclick=async()=>{
+  const title=$("#uTitle").value.trim(),url=$("#uUrl").value.trim(),m=$("#uMsg");
+  if(!title)return m.textContent="Isi judul video.";
+  if(!/^https?:\/\//i.test(url))return m.textContent="Link harus diawali http:// atau https://";
+  let thumb="";const f=$("#uThumb").files[0];
+  if(f){try{thumb=await resizeImg(f)}catch(e){return m.textContent="Gambar thumbnail tidak bisa dibaca."}}
+  const v={id:"u"+Date.now(),title,desc:$("#uDesc").value.trim(),url,cat:$("#uCat").value,thumb,owner:session.email,ownerName:session.name,at:Date.now()};
+  uploads.unshift(v);
+  if(!LS.set("ch_uploads",uploads)){uploads.shift();return}
+  ["#uTitle","#uDesc","#uUrl","#uThumb"].forEach(s=>$(s).value="");
+  closeAll();renderGrid();toast("Video dipublikasikan");
+};
+
+/* ================= KATEGORI ================= */
+$("#catBtn").onclick=()=>{
+  if(!validSession())return renderAll();
+  $("#catList").innerHTML=cats.map(c=>`<div class="f"><label for="ci_${c.id}">Nama kategori</label><input id="ci_${c.id}" value="${esc(c.name)}" maxlength="24"></div>`).join("");
+  $("#catm").classList.add("show");
+};
+$("#catSave").onclick=()=>{
+  cats=cats.map(c=>{const v=$("#ci_"+c.id).value.trim();return {id:c.id,name:v||c.name}});
+  LS.set("ch_cats",cats);closeAll();renderCats();renderGrid();toast("Kategori disimpan");
+};
+
+/* ================= UMUM ================= */
+function closeAll(){["#upl","#catm"].forEach(s=>$(s).classList.remove("show"))}
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeAll);
+$("#q").oninput=e=>{query=e.target.value;if(curId)location.hash="#/";renderGrid()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll()});
+
+/* Koneksi terputus */
+function netCheck(){
+  const n=$("#net");
+  if(navigator.onLine){n.classList.remove("show");return}
+  n.innerHTML="";
+  n.append(errView("Koneksi terputus","WiFi atau data kamu sedang mati. Nyalakan lagi lalu tekan Refresh.",()=>{navigator.onLine?location.reload():toast("Masih offline")}));
+  n.classList.add("show");
+}
+addEventListener("offline",netCheck);
+addEventListener("online",()=>{netCheck();toast("Koneksi kembali")});
+
+authMode(false);setupGoogle();renderAll();route();netCheck();
+</script>
+</body>
+</html>
